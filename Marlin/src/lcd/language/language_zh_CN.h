@@ -423,9 +423,9 @@ namespace Language_zh_CN {
   PROGMEM Language_Str MSG_MANUAL_STOW                     = _UxGT("收好Z探针");
   PROGMEM Language_Str MSG_HOME_FIRST                      = _UxGT("归位 %s%s%s 先");     //"Home ... first"
   PROGMEM Language_Str MSG_ZPROBE_OFFSETS                  = _UxGT("探针偏移量");
-  PROGMEM Language_Str MSG_ZPROBE_XOFFSET                  = _UxGT("探针X偏移量");
-  PROGMEM Language_Str MSG_ZPROBE_YOFFSET                  = _UxGT("探针Y偏移量");
-  PROGMEM Language_Str MSG_ZPROBE_ZOFFSET                  = _UxGT("探针Y偏移量");     //"Z Offset"
+  PROGMEM Language_Str MSG_ZPROBE_XOFFSET                  = _UxGT("探针X偏移");
+  PROGMEM Language_Str MSG_ZPROBE_YOFFSET                  = _UxGT("探针Y偏移");
+  PROGMEM Language_Str MSG_ZPROBE_ZOFFSET                  = _UxGT("探针Z偏移");     //"Z Offset"
   PROGMEM Language_Str MSG_BABYSTEP_X                      = _UxGT("微量调整X轴");     //"Babystep X" lcd_babystep_x, Babystepping enables the user to control the axis in tiny amounts
   PROGMEM Language_Str MSG_BABYSTEP_Y                      = _UxGT("微量调整Y轴");     //"Babystep Y"
   PROGMEM Language_Str MSG_BABYSTEP_Z                      = _UxGT("微量调整Z轴");     //"Babystep Z"
@@ -444,7 +444,6 @@ namespace Language_zh_CN {
   PROGMEM Language_Str MSG_ERR_MINTEMP_BED                 = _UxGT("错误：最低热床温度");     //"Err: MINTEMP BED"
   PROGMEM Language_Str MSG_ERR_MAXTEMP_CHAMBER             = _UxGT("错误：最高机箱温度");
   PROGMEM Language_Str MSG_ERR_MINTEMP_CHAMBER             = _UxGT("错误：最低机箱温度");
-  PROGMEM Language_Str MSG_ERR_Z_HOMING                    = _UxGT("归位 XY 先");     // "Home XY First"
   PROGMEM Language_Str MSG_HALTED                          = _UxGT("打印停机");     //"PRINTER HALTED"
   PROGMEM Language_Str MSG_PLEASE_RESET                    = _UxGT("请重置");     //"Please reset"
   PROGMEM Language_Str MSG_SHORT_DAY                       = _UxGT("天");     //"d" // One character only

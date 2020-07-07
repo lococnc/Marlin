@@ -46,6 +46,9 @@
 #endif
 
 #include "../../lcd/ultralcd.h"
+#if ENABLED(DWIN_CREALITY_LCD)
+  #include "../../lcd/dwin/dwin.h"
+#endif
 
 #if HAS_L64XX                         // set L6470 absolute position registers to counts
   #include "../../libs/L64XX/L64XX_Marlin.h"
@@ -112,13 +115,8 @@
 #if ENABLED(Z_SAFE_HOMING)
 
   inline void home_z_safely() {
-
-    // Disallow Z homing if X or Y are unknown
-    if (!TEST(axis_known_position, X_AXIS) || !TEST(axis_known_position, Y_AXIS)) {
-      LCD_MESSAGEPGM(MSG_ERR_Z_HOMING);
-      SERIAL_ECHO_MSG(STR_ERR_Z_HOMING_SER);
-      return;
-    }
+    // Disallow Z homing if X or Y homing is needed
+    if (axis_unhomed_error(_BV(X_AXIS) | _BV(Y_AXIS))) return;
 
     if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("home_z_safely >>>");
 
@@ -200,14 +198,16 @@
  */
 void GcodeSuite::G28() {
 
-#if ENABLED(LASER_MOVE_G28_OFF)
-  cutter.set_inline_enabled(false);       // turn off laser
-#endif
-
   if (DEBUGGING(LEVELING)) {
     DEBUG_ECHOLNPGM(">>> G28");
     log_machine_info();
   }
+
+  #if ENABLED(LASER_MOVE_G28_OFF)
+    cutter.set_inline_enabled(false);       // turn off laser
+  #endif
+
+  TERN_(DWIN_CREALITY_LCD, HMI_flag.home_flag = true);
 
   #if ENABLED(DUAL_X_CARRIAGE)
     bool IDEX_saved_duplication_state = extruder_duplication_enabled;
@@ -245,6 +245,9 @@ void GcodeSuite::G28() {
   #endif
 
   TERN_(CNC_WORKSPACE_PLANES, workspace_plane = PLANE_XY);
+
+  // Count this command as movement / activity
+  reset_stepper_timeout();
 
   #define HAS_CURRENT_HOME(N) (defined(N##_CURRENT_HOME) && N##_CURRENT_HOME != N##_CURRENT)
   #if HAS_CURRENT_HOME(X) || HAS_CURRENT_HOME(X2) || HAS_CURRENT_HOME(Y) || HAS_CURRENT_HOME(Y2)
@@ -474,6 +477,8 @@ void GcodeSuite::G28() {
   #endif
 
   ui.refresh();
+
+  TERN_(DWIN_CREALITY_LCD, DWIN_CompletedHoming());
 
   report_current_position();
 
