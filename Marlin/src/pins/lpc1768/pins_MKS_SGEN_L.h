@@ -268,35 +268,11 @@
     #define LCD_PINS_ENABLE                -1
     #define LCD_PINS_RS                    -1
 
-    // XPT2046 Touch Screen calibration
-    #if ENABLED(TFT_CLASSIC_UI)
-      #ifndef XPT2046_X_CALIBRATION
-        #define XPT2046_X_CALIBRATION     -11386
-      #endif
-      #ifndef XPT2046_Y_CALIBRATION
-        #define XPT2046_Y_CALIBRATION       8684
-      #endif
-      #ifndef XPT2046_X_OFFSET
-        #define XPT2046_X_OFFSET             689
-      #endif
-      #ifndef XPT2046_Y_OFFSET
-        #define XPT2046_Y_OFFSET            -273
-      #endif
-    #elif ENABLED(TFT_COLOR_UI)
-      #ifndef XPT2046_X_CALIBRATION
-        #define XPT2046_X_CALIBRATION     -16741
-      #endif
-      #ifndef XPT2046_Y_CALIBRATION
-        #define XPT2046_Y_CALIBRATION      11258
-      #endif
-      #ifndef XPT2046_X_OFFSET
-        #define XPT2046_X_OFFSET            1024
-      #endif
-      #ifndef XPT2046_Y_OFFSET
-        #define XPT2046_Y_OFFSET            -367
-      #endif
-
-      #define TFT_BUFFER_SIZE               2400
+    #ifndef TFT_BUFFER_SIZE
+      #define TFT_BUFFER_SIZE               1200
+    #endif
+    #ifndef TFT_QUEUE_SIZE
+      #define TFT_QUEUE_SIZE                6144
     #endif
 
     #define BTN_EN1                        P3_25
