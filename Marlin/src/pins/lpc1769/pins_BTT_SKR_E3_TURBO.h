@@ -47,7 +47,7 @@
 // Limit Switches
 #define X_STOP_PIN                    X_DIAG_PIN
 #define Y_STOP_PIN                    Y_DIAG_PIN
-#define Z_STOP_PIN                    Z_DIAG_PIN
+#define Z_STOP_PIN                    P1_22
 
 //
 // Z Probe
