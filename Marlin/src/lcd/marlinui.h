@@ -57,6 +57,10 @@
   #define MULTI_MANUAL 1
 #endif
 
+#if HAS_DISPLAY
+  #include "../module/printcounter.h"
+#endif
+
 #if HAS_WIRED_LCD
 
   #include "../MarlinCore.h"
@@ -357,11 +361,20 @@ public:
       static void set_progress(const progress_t p) { progress_override = _MIN(p, 100U * (PROGRESS_SCALE)); }
       static void set_progress_done() { progress_override = (PROGRESS_MASK + 1U) + 100U * (PROGRESS_SCALE); }
       static void progress_reset() { if (progress_override & (PROGRESS_MASK + 1U)) set_progress(0); }
-      #if BOTH(LCD_SET_PROGRESS_MANUALLY, USE_M73_REMAINING_TIME)
-        static uint32_t remaining_time;
-        FORCE_INLINE static void set_remaining_time(const uint32_t r) { remaining_time = r; }
-        FORCE_INLINE static uint32_t get_remaining_time() { return remaining_time; }
-        FORCE_INLINE static void reset_remaining_time() { set_remaining_time(0); }
+      #if ENABLED(SHOW_REMAINING_TIME)
+        static inline uint32_t _calculated_remaining_time() {
+          const duration_t elapsed = print_job_timer.duration();
+          const progress_t progress = _get_progress();
+          return elapsed.value * (100 * (PROGRESS_SCALE) - progress) / progress;
+        }
+        #if ENABLED(USE_M73_REMAINING_TIME)
+          static uint32_t remaining_time;
+          FORCE_INLINE static void set_remaining_time(const uint32_t r) { remaining_time = r; }
+          FORCE_INLINE static uint32_t get_remaining_time() { return remaining_time ?: _calculated_remaining_time(); }
+          FORCE_INLINE static void reset_remaining_time() { set_remaining_time(0); }
+        #else
+          FORCE_INLINE static uint32_t get_remaining_time() { return _calculated_remaining_time(); }
+        #endif
       #endif
     #endif
     static progress_t _get_progress();
@@ -624,7 +637,7 @@ public:
   //
   // Special handling if a move is underway
   //
-  #if EITHER(DELTA_CALIBRATION_MENU, DELTA_AUTO_CALIBRATION) || (ENABLED(LCD_BED_LEVELING) && EITHER(PROBE_MANUALLY, MESH_BED_LEVELING)) || (ENABLED(PROBE_OFFSET_WIZARD) && defined(PROBE_OFFSET_WIZARD_XY_POS))
+  #if ANY(DELTA_CALIBRATION_MENU, DELTA_AUTO_CALIBRATION, PROBE_OFFSET_WIZARD) || (ENABLED(LCD_BED_LEVELING) && EITHER(PROBE_MANUALLY, MESH_BED_LEVELING))
     #define LCD_HAS_WAIT_FOR_MOVE 1
     static bool wait_for_move;
   #else

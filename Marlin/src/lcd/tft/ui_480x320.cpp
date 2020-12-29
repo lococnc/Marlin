@@ -90,29 +90,31 @@ void MarlinUI::clear_lcd() {
 }
 
 #if ENABLED(SHOW_BOOTSCREEN)
-  #ifndef BOOTSCREEN_TIMEOUT
-    #define BOOTSCREEN_TIMEOUT 1500
-  #endif
-
-  #undef BOOTSCREEN_TIMEOUT
-  #define BOOTSCREEN_TIMEOUT 5000
-
   void MarlinUI::show_bootscreen() {
     tft.queue.reset();
 
     tft.canvas(0, 0, TFT_WIDTH, TFT_HEIGHT);
-    tft.set_background(COLOR_BACKGROUND);
-    tft.add_image(142, 130, imgBootScreen);  // MarlinLogo195x59x16
-
+    #if ENABLED(BOOT_MARLIN_LOGO_SMALL)
+      #define BOOT_LOGO_W 195   // MarlinLogo195x59x16
+      #define BOOT_LOGO_H  59
+      #define SITE_URL_Y (TFT_HEIGHT - 70)
+      tft.set_background(COLOR_BACKGROUND);
+    #else
+      #define BOOT_LOGO_W 480   // MarlinLogo480x320x16
+      #define BOOT_LOGO_H 320
+      #define SITE_URL_Y (TFT_HEIGHT - 90)
+    #endif
+    tft.add_image((TFT_WIDTH - BOOT_LOGO_W) / 2, (TFT_HEIGHT - BOOT_LOGO_H) / 2, imgBootScreen);
     #ifdef WEBSITE_URL
-      tft.add_text(8, 250, COLOR_WEBSITE_URL, WEBSITE_URL);
+      tft_string.set(WEBSITE_URL);
+      tft.add_text(tft_string.center(TFT_WIDTH), SITE_URL_Y, COLOR_WEBSITE_URL, tft_string);
     #endif
 
     tft.queue.sync();
     safe_delay(BOOTSCREEN_TIMEOUT);
     clear_lcd();
   }
-#endif // SHOW_BOOTSCREEN
+#endif
 
 void MarlinUI::draw_kill_screen() {
   tft.queue.reset();
@@ -262,43 +264,38 @@ void MarlinUI::draw_status_screen() {
   tft.set_background(COLOR_BACKGROUND);
   tft.add_rectangle(0, 0, TFT_WIDTH - 8, 34, COLOR_AXIS_HOMED);
 
-  uint16_t color;
-  uint16_t offset;
-  bool is_homed;
-
   tft.add_text( 16, 3, COLOR_AXIS_HOMED , "X");
   tft.add_text(192, 3, COLOR_AXIS_HOMED , "Y");
   tft.add_text(330, 3, COLOR_AXIS_HOMED , "Z");
 
-  is_homed = TEST(axis_homed, X_AXIS);
-  tft_string.set(blink & !is_homed ? "?" : ftostr4sign(LOGICAL_X_POSITION(current_position.x)));
-  tft.add_text(102 - tft_string.width(), 3, is_homed ? COLOR_AXIS_HOMED : COLOR_AXIS_NOT_HOMED, tft_string);
+  bool not_homed = axis_should_home(X_AXIS);
+  tft_string.set(blink && not_homed ? "?" : ftostr4sign(LOGICAL_X_POSITION(current_position.x)));
+  tft.add_text(102 - tft_string.width(), 3, not_homed ? COLOR_AXIS_NOT_HOMED : COLOR_AXIS_HOMED, tft_string);
 
-  is_homed = TEST(axis_homed, Y_AXIS);
-  tft_string.set(blink & !is_homed ? "?" : ftostr4sign(LOGICAL_Y_POSITION(current_position.y)));
-  tft.add_text(280 - tft_string.width(), 3, is_homed ? COLOR_AXIS_HOMED : COLOR_AXIS_NOT_HOMED, tft_string);
+  not_homed = axis_should_home(Y_AXIS);
+  tft_string.set(blink && not_homed ? "?" : ftostr4sign(LOGICAL_Y_POSITION(current_position.y)));
+  tft.add_text(280 - tft_string.width(), 3, not_homed ? COLOR_AXIS_NOT_HOMED : COLOR_AXIS_HOMED, tft_string);
 
-  is_homed = TEST(axis_homed, Z_AXIS);
-  if (blink & !is_homed) {
+  uint16_t offset = 32;
+  not_homed = axis_should_home(Z_AXIS);
+  if (blink && not_homed)
     tft_string.set("?");
-    offset = 32; // ".00"
-  }
   else {
     const float z = LOGICAL_Z_POSITION(current_position.z);
     tft_string.set(ftostr52sp((int16_t)z));
     tft_string.rtrim();
-    offset = tft_string.width();
+    offset += tft_string.width();
 
     tft_string.set(ftostr52sp(z));
-    offset += 32 - tft_string.width();
+    offset -= tft_string.width();
   }
-  tft.add_text(455 - tft_string.width() - offset, 3, is_homed ? COLOR_AXIS_HOMED : COLOR_AXIS_NOT_HOMED, tft_string);
+  tft.add_text(455 - tft_string.width() - offset, 3, not_homed ? COLOR_AXIS_NOT_HOMED : COLOR_AXIS_HOMED, tft_string);
   TERN_(TOUCH_SCREEN, touch.add_control(MOVE_AXIS, 4, 132, TFT_WIDTH - 8, 34));
 
   // feed rate
   tft.canvas(96, 180, 100, 32);
   tft.set_background(COLOR_BACKGROUND);
-  color = feedrate_percentage == 100 ? COLOR_RATE_100 : COLOR_RATE_ALTERED;
+  uint16_t color = feedrate_percentage == 100 ? COLOR_RATE_100 : COLOR_RATE_ALTERED;
   tft.add_image(0, 0, imgFeedRate, color);
   tft_string.set(i16tostr3rj(feedrate_percentage));
   tft_string.add('%');
@@ -448,6 +445,10 @@ void MenuEditItemBase::draw_edit_screen(PGM_P const pstr, const char* const valu
     #endif
   }
 
+  tft.draw_edit_screen_buttons();
+}
+
+void TFT::draw_edit_screen_buttons() {
   #if ENABLED(TOUCH_SCREEN)
     add_control(64, 256, DECREASE, imgDecrease);
     add_control(352, 256, INCREASE, imgIncrease);
@@ -662,6 +663,23 @@ void menu_item(const uint8_t row, bool sel ) {
     const TouchControlType tct = TERN(SINGLE_TOUCH_NAVIGATION, true, sel) ? MENU_CLICK : MENU_ITEM;
     touch.add_control(tct, 0, 4 + 45 * row, TFT_WIDTH, 43, encoderTopLine + row);
   #endif
+}
+
+void lcd_moveto(const lcd_uint_t col, const lcd_uint_t row) {
+  #define TFT_COL_WIDTH ((TFT_WIDTH) / (LCD_WIDTH))
+  tft.canvas(col * TFT_COL_WIDTH, 4 + 45 * row, TFT_WIDTH - (col * TFT_COL_WIDTH), 43);
+  tft.set_background(COLOR_BACKGROUND);
+}
+
+int lcd_put_u8str_max_P(PGM_P utf8_str_P, pixel_len_t max_length) {
+  tft_string.set(utf8_str_P);
+  tft_string.trim();
+  tft.add_text(MENU_TEXT_X_OFFSET, MENU_TEXT_Y_OFFSET, COLOR_MENU_TEXT, tft_string);
+  return tft_string.width();
+}
+
+int lcd_put_u8str_max(const char * utf8_str, pixel_len_t max_length) {
+  return lcd_put_u8str_max_P(utf8_str, max_length);
 }
 
 #if ENABLED(BABYSTEP_ZPROBE_OFFSET)
