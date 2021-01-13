@@ -651,6 +651,9 @@
 
 #if ENABLED(DWIN_CREALITY_LCD)
   #define SERIAL_CATCHALL 0
+  #ifndef LCD_SERIAL_PORT
+    #define LCD_SERIAL_PORT 3 // Creality 4.x board
+  #endif
 #endif
 
 /**
@@ -1043,11 +1046,6 @@
 #endif
 #ifndef INVERT_E_DIR
   #define INVERT_E_DIR false
-#endif
-
-// Fallback SPI Speed for SD
-#if ENABLED(SDSUPPORT) && !defined(SD_SPI_SPEED)
-  #define SD_SPI_SPEED SPI_FULL_SPEED
 #endif
 
 /**

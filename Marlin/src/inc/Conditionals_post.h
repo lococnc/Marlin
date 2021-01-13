@@ -323,6 +323,11 @@
  */
 #if ENABLED(SDSUPPORT)
 
+  // Extender cable doesn't support SD_DETECT_PIN
+  #if ENABLED(NO_SD_DETECT)
+    #undef SD_DETECT_PIN
+  #endif
+
   #if HAS_SD_HOST_DRIVE && SD_CONNECTION_IS(ONBOARD)
     //
     // The external SD card is not used. Hardware SPI is used to access the card.
@@ -2706,6 +2711,11 @@
   #ifndef SDSORT_CACHE_VFATS
     #define SDSORT_CACHE_VFATS 2
   #endif
+#endif
+
+// Fallback SPI Speed for SD
+#if ENABLED(SDSUPPORT) && !defined(SD_SPI_SPEED)
+  #define SD_SPI_SPEED SPI_FULL_SPEED
 #endif
 
 // Defined here to catch the above defines
