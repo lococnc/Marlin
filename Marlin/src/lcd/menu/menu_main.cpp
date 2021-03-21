@@ -97,6 +97,10 @@ void menu_configuration();
   void menu_spindle_laser();
 #endif
 
+#if ENABLED(PREHEAT_SHORTCUT_MENU_ITEM)
+  void menu_preheat_only();
+#endif
+
 #if HAS_MULTI_LANGUAGE
   void menu_language();
 #endif
@@ -177,6 +181,10 @@ void menu_main() {
       ACTION_ITEM(MSG_HOST_START_PRINT, host_action_start);
     #endif
 
+    #if ENABLED(PREHEAT_SHORTCUT_MENU_ITEM)
+      SUBMENU(MSG_PREHEAT_CUSTOM, menu_preheat_only);
+    #endif
+
     SUBMENU(MSG_MOTION, menu_motion);
   }
 
@@ -203,11 +211,13 @@ void menu_main() {
   SUBMENU(MSG_CONFIGURATION, menu_configuration);
 
   #if ENABLED(CUSTOM_USER_MENUS)
-    #ifdef CUSTOM_USER_MENU_TITLE
-      SUBMENU_P(PSTR(CUSTOM_USER_MENU_TITLE), menu_user);
-    #else
-      SUBMENU(MSG_USER_MENU, menu_user);
-    #endif
+    if (TERN1(CUSTOM_MENU_ONLY_IDLE, !busy)) {
+      #ifdef CUSTOM_USER_MENU_TITLE
+        SUBMENU_P(PSTR(CUSTOM_USER_MENU_TITLE), menu_user);
+      #else
+        SUBMENU(MSG_USER_MENU, menu_user);
+      #endif
+    }
   #endif
 
   #if ENABLED(ADVANCED_PAUSE_FEATURE)
